@@ -1,35 +1,45 @@
-name: CI - Build Verfication
+name: CI - Build & Test
 
-# TRIGGER: When does this run?
-
-on: 
-    push:
-        branches: [ "main" ]
-    pull_request:
-        branches: [ "main" ]
-
-# JOBS: What tasks to perform?
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-    build-containers: 
-        # The OS the robot runs on (Ubuntu is standard for Linux builds)
-        runs-on: ubuntu-latest
+  test-and-build:
+    runs-on: ubuntu-latest
 
-        steps:
-            # Step 1: Download your code from the repo
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+    # 1. Get Code
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-            # Step 2: Try to build the Backend API Image
-            - name: Build Backend Docker Image
-              run: |
-                cd backend
-                docker build -t expense-tracker-api .
+    # 2. Setup Node environment (The Robot needs Node installed to run tests)
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
 
-            # Step 3: Try to build the Frontend React Image
-            - name: Build Frontend Docker Image
-              run: |
-                cd frontend
-                docker build -t expense-tracker-web .
-            
-            # If any step above fails, the pipeline turns RED and sends you an email.
+    # 3. Install Backend Dependencies
+    - name: Install Backend Deps
+      run: |
+        cd backend
+        npm install
+
+    # 4. Run Tests (The New Quality Gate)
+    - name: Run Backend Tests
+      run: |
+        cd backend
+        npm test
+
+    # 5. Build Containers (Only runs if Step 4 passes)
+    - name: Build Backend Docker Image
+      run: |
+        cd backend
+        docker build -t expense-tracker-api .
+
+    - name: Build Frontend Docker Image
+      run: |
+        cd frontend
+        docker build -t expense-tracker-web .
