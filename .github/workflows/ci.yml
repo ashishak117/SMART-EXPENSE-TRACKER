@@ -1,0 +1,35 @@
+name: CI - Build Verfication
+
+# TRIGGER: When does this run?
+
+on: 
+    push:
+        branches: [ "main" ]
+    pull_request:
+        branches: [ "main" ]
+
+# JOBS: What tasks to perform?
+
+jobs:
+    build-containers: 
+        # The OS the robot runs on (Ubuntu is standard for Linux builds)
+        runs-on: ubuntu-latest
+
+        steps:
+            # Step 1: Download your code from the repo
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            # Step 2: Try to build the Backend API Image
+            - name: Build Backend Docker Image
+              run: |
+                cd backend
+                docker build -t expense-tracker-api .
+
+            # Step 3: Try to build the Frontend React Image
+            - name: Build Frontend Docker Image
+              run: |
+                cd frontend
+                docker build -t expense-tracker-web .
+            
+            # If any step above fails, the pipeline turns RED and sends you an email.
