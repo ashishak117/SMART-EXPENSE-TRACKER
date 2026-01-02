@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+spec:
+  replicas: 2 # Let's run 2 copies just to see the power of K8s!
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        # REPLACE THIS WITH YOUR DOCKER HUB IMAGE
+        image: ashishak117/smart-expense-tracker-api:latest 
+        ports:
+        - containerPort: 5000
+        env:
+        - name: PORT
+          value: "5000"
+        - name: MONGO_URI
+          # Connection string using the K8s Service Name
+          value: "mongodb://mongo-service:27017/expense_tracker" 
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  selector:
+    app: api
+  type: LoadBalancer # Exposes this to the outside world (in Minikube, we use 'minikube tunnel')
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
